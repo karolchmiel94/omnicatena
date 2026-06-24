@@ -1,0 +1,24 @@
+# Binaries
+/bin/
+*.exe
+*.test
+*.out
+
+# Local data, secrets, keystores
+.env
+*.keystore
+/data/
+
+# Go
+/vendor/
+go.work
+go.work.sum
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Notes
+NOTES.md
+

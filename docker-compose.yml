@@ -1,0 +1,66 @@
+# Local development stack: one node per chain + single-node Kafka.
+#
+# Image tags are illustrative starting points — pin exact versions before
+# relying on them, and expect to adjust flags per image. TRON's node is the
+# heaviest to start; if troublesome, point the tron adapter at the Nile/Shasta
+# testnet instead (ADR-0003).
+
+services:
+  bitcoind:
+    image: lncm/bitcoind:v27.0
+    command:
+      - -regtest=1
+      - -server=1
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=0.0.0.0/0
+      - -rpcuser=omni
+      - -rpcpassword=omni
+      - -fallbackfee=0.0002
+    ports:
+      - "18443:18443"
+
+  ethereum:
+    image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: ["anvil"]
+    command: ["--host", "0.0.0.0", "--port", "8545", "--chain-id", "31337"]
+    ports:
+      - "8545:8545"
+
+  # Base is simulated locally as a second Anvil with a distinct chainId; a real
+  # local OP-stack Base node is out of scope (ADR-0007).
+  base:
+    image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: ["anvil"]
+    command: ["--host", "0.0.0.0", "--port", "8546", "--chain-id", "8453"]
+    ports:
+      - "8546:8546"
+
+  solana:
+    image: solanalabs/solana:stable
+    command: ["solana-test-validator", "--rpc-port", "8899", "--bind-address", "0.0.0.0"]
+    ports:
+      - "8899:8899"   # RPC
+      - "8900:8900"   # WebSocket
+
+  tron:
+    image: trontools/quickstart:latest
+    ports:
+      - "9090:9090"
+    environment:
+      - defaultBalance=100000
+
+  # Single-node KRaft mode (no ZooKeeper).
+  kafka:
+    image: apache/kafka:3.7.0
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
