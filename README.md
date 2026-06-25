@@ -28,7 +28,7 @@ those are all swappable adapters.
 
 ```bash
 make up                      # start local chain nodes + Kafka via Docker
-make run-api                 # start the HTTP API (EVM working; others Day 3-5)
+make run-api                 # start the HTTP API (EVM + Bitcoin working; Solana/Base/TRON Day 4-5)
 make run-cli -- wallet create --label demo
 ```
 
