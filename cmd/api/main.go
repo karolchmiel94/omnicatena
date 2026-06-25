@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/bitcoin"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/evm"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/keystore"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/repository"
@@ -28,7 +30,17 @@ func main() {
 		log.Fatalf("eth adapter: %v", err)
 	}
 
-	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter})
+	btcAdapter, err := bitcoin.New(bitcoin.Config{
+		Host:        cfg.Bitcoin.Host,
+		User:        cfg.Bitcoin.User,
+		Pass:        cfg.Bitcoin.Pass,
+		ChainParams: &chaincfg.RegressionNetParams,
+	})
+	if err != nil {
+		log.Fatalf("btc adapter: %v", err)
+	}
+
+	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, btcAdapter})
 	keys := keystore.New()
 	repo := repository.NewInMemoryWallet()
 

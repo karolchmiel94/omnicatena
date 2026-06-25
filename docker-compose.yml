@@ -16,6 +16,7 @@ services:
       - -rpcuser=omni
       - -rpcpassword=omni
       - -fallbackfee=0.0002
+      - -txindex=1
     ports:
       - "18443:18443"
 

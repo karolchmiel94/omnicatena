@@ -7,9 +7,16 @@ type EVM struct {
 	ChainID int64
 }
 
+type Bitcoin struct {
+	Host string // host:port
+	User string
+	Pass string
+}
+
 type Config struct {
 	Ethereum EVM
 	Base     EVM
+	Bitcoin  Bitcoin
 }
 
 func Load() Config {
@@ -21,6 +28,11 @@ func Load() Config {
 		Base: EVM{
 			RPCURL:  getenv("BASE_RPC_URL", "http://localhost:8546"),
 			ChainID: 8453,
+		},
+		Bitcoin: Bitcoin{
+			Host: getenv("BITCOIN_RPC_HOST", "localhost:18443"),
+			User: getenv("BITCOIN_RPC_USER", "omni"),
+			Pass: getenv("BITCOIN_RPC_PASS", "omni"),
 		},
 	}
 }
