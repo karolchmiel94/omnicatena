@@ -22,7 +22,7 @@ those are all swappable adapters.
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Hexagonal design, ports, directory layout, the unsigned-tx envelope |
 | [ROADMAP.md](./ROADMAP.md) | One-week V1 plan, then V2 (interoperability, traffic/cost monitoring) |
 | [adr/](./adr/) | Architecture Decision Records — *why* each choice was made |
-| [turba/DESIGN.md](./turba/DESIGN.md) | Traffic simulator — noise generator + user simulator, congestion profiles |
+| [turba](https://github.com/karolchmiel94/turba) | Traffic simulator — noise generator + user simulator, congestion profiles (separate repo) |
 
 ## Quick start (once Go is installed)
 
