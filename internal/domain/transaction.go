@@ -22,6 +22,7 @@ type TransferRequest struct {
 // only the adapter that produced it can sign it.
 type UnsignedTx struct {
 	Chain   ChainID
+	Account Account // signing account — carries the derivation path the Signer needs
 	Request TransferRequest
 	Fee     FeeEstimate
 	Payload []byte
