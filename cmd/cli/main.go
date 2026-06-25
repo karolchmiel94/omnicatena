@@ -1,6 +1,53 @@
 // Command omni wires the same app services as the API behind a CLI.
 package main
 
+import (
+	"log"
+	"os"
+
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/chain"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/bitcoin"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/evm"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/keystore"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/repository"
+	"github.com/karolchmiel94/omnicatena/internal/app"
+	"github.com/karolchmiel94/omnicatena/internal/config"
+	"github.com/karolchmiel94/omnicatena/internal/domain"
+	"github.com/karolchmiel94/omnicatena/internal/port"
+	"github.com/karolchmiel94/omnicatena/internal/transport/cli"
+)
+
 func main() {
-	// TODO(v1): load config → build registry + adapters → app services → dispatch commands.
+	cfg := config.Load()
+
+	ethAdapter, err := evm.New(evm.Config{
+		RPCURL:  cfg.Ethereum.RPCURL,
+		ChainID: cfg.Ethereum.ChainID,
+		Chain:   domain.ChainEthereum,
+	})
+	if err != nil {
+		log.Fatalf("eth adapter: %v", err)
+	}
+
+	btcAdapter, err := bitcoin.New(bitcoin.Config{
+		Host:        cfg.Bitcoin.Host,
+		User:        cfg.Bitcoin.User,
+		Pass:        cfg.Bitcoin.Pass,
+		ChainParams: &chaincfg.RegressionNetParams,
+	})
+	if err != nil {
+		log.Fatalf("btc adapter: %v", err)
+	}
+
+	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, btcAdapter})
+	keys := keystore.New()
+	repo := repository.NewInMemoryWallet()
+
+	walletSvc := app.NewWalletService(registry, keys, repo)
+	txSvc := app.NewTransactionService(registry, keys, repo)
+
+	if err := cli.New(walletSvc, txSvc).Run(os.Args[1:]); err != nil {
+		log.Fatal(err)
+	}
 }
