@@ -6,18 +6,18 @@ The strategy is **walking skeleton first**: get one chain working end to end
 through the whole hexagon before replicating across the other four. This
 validates the architecture in code while it's still cheap to change.
 
-### Day 1 — Foundations
+### ✓ Day 1 — Foundations
 - Project skeleton, `go.mod`, Makefile, `.gitignore`.
 - Domain types + ports compiling (`internal/domain`, `internal/port`).
-- `docker-compose` up: at minimum the EVM (Anvil) node + Kafka.
-- Config loader; network → endpoint mapping.
+- `docker-compose` up: all chain nodes + Kafka.
 
-### Day 2 — Walking skeleton (EVM end-to-end)
-- `evm` adapter: derive account, balance, build/sign/broadcast, get tx.
-- `KeyStore` (Argon2 + AES-GCM) + `Signer`; in-memory `WalletRepository`.
-- `WalletService` + `TxService` create/balance/transfer wired.
-- HTTP transport for the above. **Demo: create wallet → fund from Anvil →
-  transfer → confirm on local Ethereum.**
+### ✓ Day 2 — Walking skeleton (EVM end-to-end)
+- `evm` adapter: derive account (secp256k1 BIP-44), balance, EIP-1559 build/sign/broadcast, get tx.
+- `KeyStore` (Argon2id + AES-256-GCM) + in-memory `Signer`; in-memory `WalletRepository`.
+- `WalletService` + `TransactionService` create/balance/transfer implemented.
+- `chi` HTTP transport. Config loader (env → RPC URL/chainId).
+- `turba/DESIGN.md`: traffic simulator design.
+- **Demo verified: create wallet → fund from Anvil → transfer 0.1 ETH → confirmed on-chain.**
 
 ### Day 3 — Second surface + second family
 - CLI transport over the same services (proves NFR: one core, two surfaces).
