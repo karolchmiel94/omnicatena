@@ -36,7 +36,7 @@ make run-cli -- wallet create --label demo
 
 | Chain | Family | V1 network | Notes |
 |-------|--------|-----------|-------|
-| Bitcoin | UTXO | local `regtest` | mine blocks to self-fund — Day 3 |
+| Bitcoin | UTXO | local `regtest` | ✓ working — mine blocks to self-fund |
 | Ethereum | EVM | local (Anvil) | ✓ working — pre-funded dev accounts |
 | Base | EVM | local (Anvil, alt chainId) | shares the EVM adapter — Day 5 |
 | Solana | Solana | local (`solana-test-validator`) | ed25519 keys — Day 4 |

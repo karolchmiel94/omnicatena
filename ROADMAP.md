@@ -19,9 +19,11 @@ validates the architecture in code while it's still cheap to change.
 - `turba/DESIGN.md`: traffic simulator design.
 - **Demo verified: create wallet → fund from Anvil → transfer 0.1 ETH → confirmed on-chain.**
 
-### Day 3 — Second surface + second family
+### ✓ Day 3 — Second surface + second family
 - CLI transport over the same services (proves NFR: one core, two surfaces).
-- `bitcoin` adapter (UTXO: coin selection, regtest funding via mined blocks).
+- `bitcoin` adapter: P2PKH derivation, scantxoutset balance, largest-first UTXO coin
+  selection with coinbase maturity filter, P2PKH scriptSig, sendrawtransaction.
+- **Demo verified: derive BTC address → mine 101 regtest blocks → transfer 1 BTC → confirmed.**
 
 ### Day 4 — Solana
 - `solana` adapter (ed25519 / SLIP-0010 derivation, recent-blockhash,
