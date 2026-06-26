@@ -1,7 +1,10 @@
-// Package hdwallet provides BIP-32/44 key derivation shared across chain adapters.
+// Package hdwallet provides BIP-32/44 and SLIP-0010 key derivation shared across chain adapters.
 package hdwallet
 
 import (
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 	"strings"
@@ -31,6 +34,41 @@ func DeriveKey(seed []byte, path domain.DerivationPath) (*hdkeychain.ExtendedKey
 		}
 	}
 	return key, nil
+}
+
+// DeriveKeyEd25519 implements SLIP-0010 for ed25519. All path components must be
+// hardened (index >= 2^31) — the spec forbids unhardened ed25519 derivation.
+// Returns the 32-byte private key seed; pass to ed25519.NewKeyFromSeed.
+func DeriveKeyEd25519(seed []byte, path domain.DerivationPath) ([]byte, error) {
+	mac := hmac.New(sha512.New, []byte("ed25519 seed"))
+	mac.Write(seed)
+	I := mac.Sum(nil)
+	key, chainCode := I[:32], I[32:]
+
+	indices, err := parsePath(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, idx := range indices {
+		if idx < hdkeychain.HardenedKeyStart {
+			return nil, fmt.Errorf("hdwallet: ed25519 path requires all-hardened indices, got %d", idx)
+		}
+		var b [4]byte
+		binary.BigEndian.PutUint32(b[:], idx)
+
+		data := make([]byte, 0, 37)
+		data = append(data, 0x00)
+		data = append(data, key...)
+		data = append(data, b[:]...)
+
+		h := hmac.New(sha512.New, chainCode)
+		h.Write(data)
+		I = h.Sum(nil)
+		key, chainCode = I[:32], I[32:]
+	}
+	out := make([]byte, 32)
+	copy(out, key)
+	return out, nil
 }
 
 func parsePath(path domain.DerivationPath) ([]uint32, error) {

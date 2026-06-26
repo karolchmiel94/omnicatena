@@ -13,10 +13,15 @@ type Bitcoin struct {
 	Pass string
 }
 
+type Solana struct {
+	RPCURL string
+}
+
 type Config struct {
 	Ethereum EVM
 	Base     EVM
 	Bitcoin  Bitcoin
+	Solana   Solana
 }
 
 func Load() Config {
@@ -33,6 +38,9 @@ func Load() Config {
 			Host: getenv("BITCOIN_RPC_HOST", "localhost:18443"),
 			User: getenv("BITCOIN_RPC_USER", "omni"),
 			Pass: getenv("BITCOIN_RPC_PASS", "omni"),
+		},
+		Solana: Solana{
+			RPCURL: getenv("SOLANA_RPC_URL", "http://localhost:8899"),
 		},
 	}
 }

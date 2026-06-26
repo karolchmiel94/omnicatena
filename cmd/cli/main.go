@@ -9,6 +9,7 @@ import (
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/bitcoin"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/evm"
+	solanadapter "github.com/karolchmiel94/omnicatena/internal/adapter/chain/solana"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/keystore"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/repository"
 	"github.com/karolchmiel94/omnicatena/internal/app"
@@ -40,7 +41,9 @@ func main() {
 		log.Fatalf("btc adapter: %v", err)
 	}
 
-	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, btcAdapter})
+	solAdapter := solanadapter.New(cfg.Solana.RPCURL)
+
+	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, btcAdapter, solAdapter})
 	keys := keystore.New()
 	repo := repository.NewInMemoryWallet()
 

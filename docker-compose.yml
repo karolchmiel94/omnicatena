@@ -42,6 +42,10 @@ services:
     ports:
       - "8899:8899"   # RPC
       - "8900:8900"   # WebSocket
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
 
   tron:
     image: trontools/quickstart:latest
