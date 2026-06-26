@@ -25,9 +25,10 @@ validates the architecture in code while it's still cheap to change.
   selection with coinbase maturity filter, P2PKH scriptSig, sendrawtransaction.
 - **Demo verified: derive BTC address → mine 101 regtest blocks → transfer 1 BTC → confirmed.**
 
-### Day 4 — Solana
-- `solana` adapter (ed25519 / SLIP-0010 derivation, recent-blockhash,
-  `solana-test-validator`).
+### ✓ Day 4 — Solana
+- `solana` adapter: SLIP-0010 ed25519 derivation (`m/44'/501'/0'/0'`), balance, EIP-style fee estimate (5000 lamports), build/sign/broadcast, get tx.
+- `DeriveKeyEd25519` added to `hdwallet`; keystore signer dispatches to ed25519 for Solana.
+- **Demo verified: airdrop 2 SOL → balance → transfer 0.1 SOL → confirmed on-chain (test-validator).**
 
 ### Day 5 — TRON + Base
 - `tron` adapter (TVM, base58 addresses, energy/bandwidth).

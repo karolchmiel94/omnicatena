@@ -28,7 +28,7 @@ those are all swappable adapters.
 
 ```bash
 make up                      # start local chain nodes + Kafka via Docker
-make run-api                 # start the HTTP API (EVM + Bitcoin working; Solana/Base/TRON Day 4-5)
+make run-api                 # start the HTTP API (EVM + Bitcoin + Solana working; Base/TRON Day 5)
 make run-cli -- wallet create --label demo
 ```
 
@@ -39,5 +39,5 @@ make run-cli -- wallet create --label demo
 | Bitcoin | UTXO | local `regtest` | ✓ working — mine blocks to self-fund |
 | Ethereum | EVM | local (Anvil) | ✓ working — pre-funded dev accounts |
 | Base | EVM | local (Anvil, alt chainId) | shares the EVM adapter — Day 5 |
-| Solana | Solana | local (`solana-test-validator`) | ed25519 keys — Day 4 |
+| Solana | Solana | local (`solana-test-validator`) | ✓ working — airdrop to self-fund |
 | TRON | TVM | local (`tron-quickstart`) | heaviest local node — Day 5 |
