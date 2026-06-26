@@ -17,8 +17,11 @@ build: ## Build api and cli binaries into ./bin
 	go build -o bin/omni-api ./cmd/api
 	go build -o bin/omni ./cmd/cli
 
-test: ## Run tests
+test: ## Run unit tests
 	go test ./...
+
+test-smoke: ## Run smoke tests against the local stack (requires: make up)
+	go test -tags smoke -v -timeout 120s ./test/smoke/...
 
 run-api: ## Run the HTTP API
 	go run ./cmd/api

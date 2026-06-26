@@ -82,7 +82,7 @@ func (a *Adapter) EstimateFee(ctx context.Context, req domain.TransferRequest) (
 		baseFee = big.NewInt(0)
 	}
 
-	adjustedTip := scaleTip(tip, req.Speed)
+	adjustedTip := ScaleTip(tip, req.Speed)
 	// standard EIP-1559 formula: maxFee = 2*baseFee + tip
 	maxFee := new(big.Int).Add(new(big.Int).Mul(baseFee, big.NewInt(2)), adjustedTip)
 
@@ -212,8 +212,8 @@ func (a *Adapter) GetTransaction(ctx context.Context, hash string) (domain.Trans
 	}, nil
 }
 
-// scaleTip adjusts the suggested miner tip by speed: fast=1.5×, economy=0.8×, standard=1×.
-func scaleTip(tip *big.Int, speed domain.FeeSpeed) *big.Int {
+// ScaleTip adjusts the suggested miner tip by speed: fast=1.5×, economy=0.8×, standard=1×.
+func ScaleTip(tip *big.Int, speed domain.FeeSpeed) *big.Int {
 	mul := int64(10)
 	switch speed {
 	case domain.SpeedFast:

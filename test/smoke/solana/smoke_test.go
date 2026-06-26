@@ -1,6 +1,6 @@
 //go:build smoke
 
-package solana_test
+package smoke_test
 
 import (
 	"context"
@@ -60,8 +60,6 @@ func TestSmokeEndToEnd(t *testing.T) {
 	toAddr := domain.Address(toKey.PublicKey().String())
 	t.Logf("recipient: %s", toAddr)
 
-	// Derive a second address from a fresh mnemonic as the source for the
-	// mnemonic test — but we already have a keystore-funded address above.
 	_ = bip39.ErrInvalidMnemonic // ensure import used
 
 	req := domain.TransferRequest{
