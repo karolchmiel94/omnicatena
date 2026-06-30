@@ -66,3 +66,19 @@ Don't overcomment the code. There is no need to explain each class and function.
 ---
 
 Don't add Claude to git commits. This is a strict policy. Keep commit comments short.
+
+---
+
+## 5. Tests Are Not Optional
+
+Every new adapter, service, or non-trivial function must ship with tests. No exceptions.
+
+**Unit tests** (`test/unit/`) — pure logic, no running nodes required. Cover:
+- `DeriveAccount`: deterministic, different indices give different addresses, address format (prefix + length).
+- `EstimateFee`: correct values, params keys, speed preserved.
+- `Chain()`: returns the right `domain.ChainID`.
+- Any exported pure function (e.g. `ScaleTip`).
+
+**Smoke tests** (`test/smoke/<chain>/`) — full end-to-end against the local docker stack (build tag `smoke`, run with `make test-smoke`). Cover the full lifecycle: fund → balance → BuildTransfer → Sign → Broadcast → GetTransaction → recipient balance.
+
+Pattern: match existing tests in `test/unit/` and `test/smoke/`. Each smoke test funds its address using the chain's local dev mechanism (Anvil pre-funded key, bitcoin-cli, solana airdrop, tron-quickstart `/admin/accounts`).

@@ -10,6 +10,7 @@ import (
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/bitcoin"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/evm"
 	solanadapter "github.com/karolchmiel94/omnicatena/internal/adapter/chain/solana"
+	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/tron"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/keystore"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/repository"
 	"github.com/karolchmiel94/omnicatena/internal/app"
@@ -31,6 +32,15 @@ func main() {
 		log.Fatalf("eth adapter: %v", err)
 	}
 
+	baseAdapter, err := evm.New(evm.Config{
+		RPCURL:  cfg.Base.RPCURL,
+		ChainID: cfg.Base.ChainID,
+		Chain:   domain.ChainBase,
+	})
+	if err != nil {
+		log.Fatalf("base adapter: %v", err)
+	}
+
 	btcAdapter, err := bitcoin.New(bitcoin.Config{
 		Host:        cfg.Bitcoin.Host,
 		User:        cfg.Bitcoin.User,
@@ -42,8 +52,9 @@ func main() {
 	}
 
 	solAdapter := solanadapter.New(cfg.Solana.RPCURL)
+	tronAdapter := tron.New(tron.Config{RPCURL: cfg.Tron.RPCURL})
 
-	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, btcAdapter, solAdapter})
+	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, baseAdapter, btcAdapter, solAdapter, tronAdapter})
 	keys := keystore.New()
 	repo := repository.NewInMemoryWallet()
 

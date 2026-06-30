@@ -30,13 +30,27 @@ validates the architecture in code while it's still cheap to change.
 - `DeriveKeyEd25519` added to `hdwallet`; keystore signer dispatches to ed25519 for Solana.
 - **Demo verified: airdrop 2 SOL → balance → transfer 0.1 SOL → confirmed on-chain (test-validator).**
 
-### Day 5 — TRON + Base
-- `tron` adapter (TVM, base58 addresses, energy/bandwidth).
-- Wire **Base as a second EVM config** (alt chainId/endpoint) — minimal new code.
+### ✓ Day 5 — TRON + Base
+- `tron` adapter: secp256k1 BIP-44 at `m/44'/195'/0'/0/0`; base58check addresses (T…);
+  direct HTTP JSON API to tron-quickstart; bandwidth-based fee ceiling (268,000 sun);
+  build/sign/broadcast/getTransaction. TRON API-level errors (HTTP 200 `{"Error":…}`) now
+  surface cleanly from `BuildTransfer`.
+- Base wired as a second `evm.Adapter` instance (distinct chainId/endpoint, same code — ADR-0007).
+- Unit tests for both (address format, derivation determinism, fee model); smoke tests verified
+  end-to-end against tron-quickstart and Base Anvil.
+- **Demo verified: fund TRON account from quickstart admin key → transfer 1 TRX → confirmed block 54.**
+- CLAUDE.md rule added: every adapter ships with unit + smoke tests, no exceptions.
 
-### Day 6 — Monitoring
-- `ChainWatcher` per chain (polling), `MonitorService`.
-- Kafka `TxEventPublisher`; events flowing to a topic.
+### Day 6 — PostgreSQL + Monitoring
+- **PostgreSQL persistence** (`db/schema.sql`) replacing in-memory stubs:
+  - `wallets`, `accounts` → persistent `WalletRepository`.
+  - `keystore` → persistent `KeyStore` (encrypted blobs, never plaintext).
+  - `transactions` + `tx_addresses` → new `TransactionRepository` port.
+  - `chain_cursors` → monitoring bookmark (last scanned block per chain).
+- **`ChainWatcher` per chain** — polls new blocks (not addresses); scans all txs per block
+  against an in-memory address set loaded from `accounts`; O(1) lookup regardless of wallet count.
+- **`MonitorService`** — owns watchers, refreshes address set, persists matched txs.
+- **Kafka `TxEventPublisher`** — consumes matched events, produces to `omnicatena.tx.events`.
 
 ### Day 7 — Hardening & polish
 - Fee estimate endpoints (naive per chain).

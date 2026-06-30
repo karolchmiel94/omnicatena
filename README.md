@@ -28,16 +28,16 @@ those are all swappable adapters.
 
 ```bash
 make up                      # start local chain nodes + Kafka via Docker
-make run-api                 # start the HTTP API (EVM + Bitcoin + Solana working; Base/TRON Day 5)
+make run-api                 # start the HTTP API on :8080
 make run-cli -- wallet create --label demo
 ```
 
 ## Supported chains
 
-| Chain | Family | V1 network | Notes |
-|-------|--------|-----------|-------|
+| Chain | Family | V1 network | Status |
+|-------|--------|-----------|--------|
 | Bitcoin | UTXO | local `regtest` | ✓ working — mine blocks to self-fund |
-| Ethereum | EVM | local (Anvil) | ✓ working — pre-funded dev accounts |
-| Base | EVM | local (Anvil, alt chainId) | shares the EVM adapter — Day 5 |
+| Ethereum | EVM | local (Anvil, port 8545) | ✓ working — pre-funded dev accounts |
+| Base | EVM | local (Anvil, port 8546) | ✓ working — shares EVM adapter (ADR-0007) |
 | Solana | Solana | local (`solana-test-validator`) | ✓ working — airdrop to self-fund |
-| TRON | TVM | local (`tron-quickstart`) | heaviest local node — Day 5 |
+| TRON | TVM | local (`tron-quickstart`) | ✓ working — admin accounts pre-funded |

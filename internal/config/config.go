@@ -17,11 +17,16 @@ type Solana struct {
 	RPCURL string
 }
 
+type Tron struct {
+	RPCURL string
+}
+
 type Config struct {
 	Ethereum EVM
 	Base     EVM
 	Bitcoin  Bitcoin
 	Solana   Solana
+	Tron     Tron
 }
 
 func Load() Config {
@@ -41,6 +46,9 @@ func Load() Config {
 		},
 		Solana: Solana{
 			RPCURL: getenv("SOLANA_RPC_URL", "http://localhost:8899"),
+		},
+		Tron: Tron{
+			RPCURL: getenv("TRON_RPC_URL", "http://localhost:9090"),
 		},
 	}
 }
