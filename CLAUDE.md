@@ -82,3 +82,16 @@ Every new adapter, service, or non-trivial function must ship with tests. No exc
 **Smoke tests** (`test/smoke/<chain>/`) — full end-to-end against the local docker stack (build tag `smoke`, run with `make test-smoke`). Cover the full lifecycle: fund → balance → BuildTransfer → Sign → Broadcast → GetTransaction → recipient balance.
 
 Pattern: match existing tests in `test/unit/` and `test/smoke/`. Each smoke test funds its address using the chain's local dev mechanism (Anvil pre-funded key, bitcoin-cli, solana airdrop, tron-quickstart `/admin/accounts`).
+
+A `PostToolUse` hook runs `go build ./...` after every edit and feeds failures straight back. A `Stop` hook runs `go build && go vet && go test ./...` before ending the turn and blocks on failure — don't fight it by trying to stop anyway; fix what it reports. It skips only when on `master` with no pending `.go` changes.
+
+## 6. Delivery Workflow
+
+For every task, end to end:
+
+1. Branch off `master`: `git checkout -b <type>/<short-slug>` (`feat/`, `fix/`, `chore/`). Never commit directly to `master`.
+2. Implement per the rules above.
+3. Run `make test` (and `make test-smoke` if the change touches a chain adapter and the local stack in `make up` is relevant) before committing — the `Stop` hook enforces this, but don't rely on it catching what you can check yourself first.
+4. Commit with a short, factual message. No Claude attribution — same strict policy as elsewhere in this file, applies to commits and PR bodies alike.
+5. Push the branch and open a PR with `gh pr create`: a short body covering what changed, why, and how it was tested. Don't merge it — leave that to review.
+6. Report the PR URL. Nothing is "done" until there's a PR link.

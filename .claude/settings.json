@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/go-build-check.sh",
+            "timeout": 30,
+            "statusMessage": "go build ./..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-stop-tests.sh",
+            "timeout": 120,
+            "statusMessage": "go build && go vet && go test ./..."
+          }
+        ]
+      }
+    ]
+  }
+}
