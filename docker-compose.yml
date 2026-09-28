@@ -6,6 +6,19 @@
 # testnet instead (ADR-0003).
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: omni
+      POSTGRES_PASSWORD: omni
+      POSTGRES_DB: omnicatena
+    ports:
+      - "5433:5432"
+    volumes:
+      # Applied automatically on first container startup (standard postgres
+      # image entrypoint behavior) — chain-agnostic by design, see schema.sql.
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
   bitcoind:
     image: lncm/bitcoind:v27.0
     command:

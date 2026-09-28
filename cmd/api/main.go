@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/bitcoin"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/evm"
@@ -25,6 +26,15 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	dbPool, err := pgxpool.New(context.Background(), cfg.Database.URL)
+	if err != nil {
+		log.Fatalf("db: %v", err)
+	}
+	defer dbPool.Close()
+	if err := dbPool.Ping(context.Background()); err != nil {
+		log.Fatalf("db: ping: %v", err)
+	}
 
 	ethAdapter, err := evm.New(evm.Config{
 		RPCURL:  cfg.Ethereum.RPCURL,
@@ -58,22 +68,25 @@ func main() {
 	tronAdapter := tron.New(tron.Config{RPCURL: cfg.Tron.RPCURL})
 
 	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, baseAdapter, btcAdapter, solAdapter, tronAdapter})
-	keys := keystore.New()
-	repo := repository.NewInMemoryWallet()
+	keys := keystore.NewPostgres(dbPool)
+	repo := repository.NewPostgresWallet(dbPool)
 
 	walletSvc := app.NewWalletService(registry, keys, repo)
 	txSvc := app.NewTransactionService(registry, keys, repo)
 
 	// Block-scanning watchers — EVM only for now (Ethereum + Base); Bitcoin,
 	// Solana, TRON watchers follow the same pattern as a later addition.
+	cursors := repository.NewPostgresCursor(dbPool)
 	ethWatcher, err := evm.NewWatcher(evm.Config{RPCURL: cfg.Ethereum.RPCURL, ChainID: cfg.Ethereum.ChainID, Chain: domain.ChainEthereum})
 	if err != nil {
 		log.Fatalf("eth watcher: %v", err)
 	}
+	ethWatcher.SetCursorStore(cursors)
 	baseWatcher, err := evm.NewWatcher(evm.Config{RPCURL: cfg.Base.RPCURL, ChainID: cfg.Base.ChainID, Chain: domain.ChainBase})
 	if err != nil {
 		log.Fatalf("base watcher: %v", err)
 	}
+	baseWatcher.SetCursorStore(cursors)
 	registry.RegisterWatcher(ethWatcher)
 	registry.RegisterWatcher(baseWatcher)
 
@@ -83,34 +96,11 @@ func main() {
 		defer kafkaPub.Close()
 		publisher = kafkaPub
 	}
-	monitorSvc := app.NewMonitorService(registry, publisher)
+	txRepo := repository.NewPostgresTransaction(dbPool)
+	monitorSvc := app.NewMonitorService(registry, publisher, txRepo)
 	startMonitoring(monitorSvc, repo)
 
 	h := transport.NewHandler(walletSvc, txSvc)
 	log.Println("api listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", h.Router()))
-}
-
-// startMonitoring watches whatever wallet addresses exist at startup — there's
-// no persistence yet, so the repo (and therefore the watched set) is a snapshot
-// taken once here, not refreshed as new wallets are created afterward.
-func startMonitoring(svc *app.MonitorService, repo port.WalletRepository) {
-	wallets, err := repo.List(context.Background())
-	if err != nil {
-		log.Printf("monitor: list wallets: %v", err)
-		return
-	}
-	for _, chain := range []domain.ChainID{domain.ChainEthereum, domain.ChainBase} {
-		var addrs []domain.Address
-		for _, w := range wallets {
-			if acc, ok := w.Account(chain); ok {
-				addrs = append(addrs, acc.Address)
-			}
-		}
-		go func(chain domain.ChainID, addrs []domain.Address) {
-			if err := svc.Watch(context.Background(), chain, addrs); err != nil {
-				log.Printf("monitor: watch %s: %v", chain, err)
-			}
-		}(chain, addrs)
-	}
 }

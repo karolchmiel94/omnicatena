@@ -24,15 +24,20 @@ func NewWalletService(r port.Registry, k port.KeyStore, repo port.WalletReposito
 func (s *WalletService) Create(ctx context.Context, label string, passphrase []byte) (domain.Wallet, error) {
 	id := fmt.Sprintf("w%d", time.Now().UnixNano())
 
-	seed, err := s.keys.Create(id, passphrase)
-	if err != nil {
-		return domain.Wallet{}, fmt.Errorf("wallet: create keys: %w", err)
-	}
-
 	w := domain.Wallet{
 		ID:        id,
 		Label:     label,
 		CreatedAt: time.Now(),
+	}
+	// The wallet row must exist before the keystore write: the keystore table
+	// has a foreign key on wallet_id (schema.sql).
+	if err := s.repo.Save(ctx, w); err != nil {
+		return domain.Wallet{}, fmt.Errorf("wallet: save: %w", err)
+	}
+
+	seed, err := s.keys.Create(id, passphrase)
+	if err != nil {
+		return domain.Wallet{}, fmt.Errorf("wallet: create keys: %w", err)
 	}
 
 	for _, chainID := range s.registry.Supported() {
@@ -48,7 +53,7 @@ func (s *WalletService) Create(ctx context.Context, label string, passphrase []b
 	}
 
 	if err := s.repo.Save(ctx, w); err != nil {
-		return domain.Wallet{}, fmt.Errorf("wallet: save: %w", err)
+		return domain.Wallet{}, fmt.Errorf("wallet: save accounts: %w", err)
 	}
 	return w, nil
 }

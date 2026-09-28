@@ -61,9 +61,10 @@ func TestMatchTransactions(t *testing.T) {
 	contractCreation := signTestTx(t, keyA, nil, 2)            // watched -> nil (To() == nil)
 
 	txs := []*types.Transaction{outbound, inbound, both, irrelevant, contractCreation}
+	const blockNumber = uint64(42)
 	const blockTime = uint64(1_700_000_000)
 
-	events := evm.MatchTransactions(domain.ChainEthereum, watcherTestSigner, txs, blockTime, watched)
+	events := evm.MatchTransactions(domain.ChainEthereum, watcherTestSigner, txs, blockNumber, blockTime, watched)
 
 	want := map[string]domain.TxEventType{
 		outbound.Hash().Hex():         domain.EventOutbound,
@@ -92,9 +93,25 @@ func TestMatchTransactions(t *testing.T) {
 		if got[0].Chain != domain.ChainEthereum {
 			t.Errorf("tx %s: chain = %s, want %s", hash, got[0].Chain, domain.ChainEthereum)
 		}
+		if got[0].BlockHeight != blockNumber {
+			t.Errorf("tx %s: block height = %d, want %d", hash, got[0].BlockHeight, blockNumber)
+		}
 		if !got[0].Timestamp.Equal(got[0].Timestamp) || got[0].Timestamp.Unix() != int64(blockTime) {
 			t.Errorf("tx %s: timestamp = %v, want unix %d", hash, got[0].Timestamp, blockTime)
 		}
+	}
+
+	// outbound (A -> stranger): counterparty is the stranger.
+	if got := gotByHash[outbound.Hash().Hex()][0]; got.Counterparty != domain.Address(addrStranger.Hex()) {
+		t.Errorf("outbound counterparty = %s, want %s", got.Counterparty, addrStranger.Hex())
+	}
+	// inbound (stranger -> B): counterparty is the stranger.
+	if got := gotByHash[inbound.Hash().Hex()][0]; got.Counterparty != domain.Address(addrStranger.Hex()) {
+		t.Errorf("inbound counterparty = %s, want %s", got.Counterparty, addrStranger.Hex())
+	}
+	// contract creation (A -> nil): no counterparty.
+	if got := gotByHash[contractCreation.Hash().Hex()][0]; got.Counterparty != "" {
+		t.Errorf("contract creation counterparty = %q, want empty", got.Counterparty)
 	}
 
 	bothEvents := gotByHash[both.Hash().Hex()]
@@ -108,6 +125,18 @@ func TestMatchTransactions(t *testing.T) {
 	if !seenTypes[domain.EventOutbound] || !seenTypes[domain.EventInbound] {
 		t.Errorf("watched->watched tx: want both outbound and inbound, got %+v", bothEvents)
 	}
+	for _, e := range bothEvents {
+		switch e.Type {
+		case domain.EventOutbound: // A's side: counterparty is B
+			if e.Address != domain.Address(addrA.Hex()) || e.Counterparty != domain.Address(addrB.Hex()) {
+				t.Errorf("watched->watched outbound: address=%s counterparty=%s, want %s/%s", e.Address, e.Counterparty, addrA.Hex(), addrB.Hex())
+			}
+		case domain.EventInbound: // B's side: counterparty is A
+			if e.Address != domain.Address(addrB.Hex()) || e.Counterparty != domain.Address(addrA.Hex()) {
+				t.Errorf("watched->watched inbound: address=%s counterparty=%s, want %s/%s", e.Address, e.Counterparty, addrB.Hex(), addrA.Hex())
+			}
+		}
+	}
 }
 
 func TestMatchTransactions_NoWatchedAddresses(t *testing.T) {
@@ -115,7 +144,7 @@ func TestMatchTransactions_NoWatchedAddresses(t *testing.T) {
 	to := crypto.PubkeyToAddress(mustKey(t).PublicKey)
 	tx := signTestTx(t, key, &to, 0)
 
-	events := evm.MatchTransactions(domain.ChainEthereum, watcherTestSigner, []*types.Transaction{tx}, 0, map[common.Address]domain.Address{})
+	events := evm.MatchTransactions(domain.ChainEthereum, watcherTestSigner, []*types.Transaction{tx}, 0, 0, map[common.Address]domain.Address{})
 	if len(events) != 0 {
 		t.Errorf("empty watch set: got %d events, want 0", len(events))
 	}

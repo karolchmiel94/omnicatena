@@ -39,15 +39,10 @@ func New() *InMemory {
 }
 
 func (ks *InMemory) Create(walletID string, passphrase []byte) ([]byte, error) {
-	entropy, err := bip39.NewEntropy(256)
+	seed, err := newSeed()
 	if err != nil {
 		return nil, err
 	}
-	mnemonic, err := bip39.NewMnemonic(entropy)
-	if err != nil {
-		return nil, err
-	}
-	seed := bip39.NewSeed(mnemonic, "")
 
 	enc, err := seal(seed, passphrase)
 	if err != nil {
@@ -77,6 +72,20 @@ func (ks *InMemory) Signer(walletID string, passphrase []byte) (port.Signer, err
 		return nil, err
 	}
 	return &memSigner{seed: seed}, nil
+}
+
+// newSeed generates a fresh BIP-39 mnemonic and its seed — shared by InMemory
+// and Postgres, which differ only in where the sealed seed is stored.
+func newSeed() ([]byte, error) {
+	entropy, err := bip39.NewEntropy(256)
+	if err != nil {
+		return nil, err
+	}
+	mnemonic, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		return nil, err
+	}
+	return bip39.NewSeed(mnemonic, ""), nil
 }
 
 func seal(plaintext, passphrase []byte) (envelope, error) {

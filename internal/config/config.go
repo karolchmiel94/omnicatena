@@ -32,6 +32,10 @@ type Kafka struct {
 	Topic   string
 }
 
+type Database struct {
+	URL string
+}
+
 type Config struct {
 	Ethereum EVM
 	Base     EVM
@@ -39,6 +43,7 @@ type Config struct {
 	Solana   Solana
 	Tron     Tron
 	Kafka    Kafka
+	Database Database
 }
 
 func Load() Config {
@@ -66,6 +71,9 @@ func Load() Config {
 			Enabled: getenv("KAFKA_ENABLED", "false") == "true",
 			Brokers: strings.Split(getenv("KAFKA_BROKERS", "localhost:9092"), ","),
 			Topic:   getenv("KAFKA_TOPIC", "omnicatena.tx.events"),
+		},
+		Database: Database{
+			URL: getenv("DATABASE_URL", "postgres://omni:omni@localhost:5433/omnicatena?sslmode=disable"),
 		},
 	}
 }
