@@ -23,6 +23,12 @@ func NewRegistry(adapters []port.ChainAdapter) *Registry {
 	return r
 }
 
+// RegisterWatcher wires a ChainWatcher in, keyed by its own Chain(). Separate
+// from NewRegistry because not every chain has a watcher yet (walking skeleton).
+func (r *Registry) RegisterWatcher(w port.ChainWatcher) {
+	r.watchers[w.Chain()] = w
+}
+
 func (r *Registry) Adapter(chain domain.ChainID) (port.ChainAdapter, error) {
 	a, ok := r.adapters[chain]
 	if !ok {

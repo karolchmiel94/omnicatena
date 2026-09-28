@@ -32,6 +32,13 @@ func (s *stubAdapter) GetTransaction(_ context.Context, _ string) (domain.Transa
 	return domain.Transaction{}, nil
 }
 
+type stubWatcher struct{ chain domain.ChainID }
+
+func (s *stubWatcher) Chain() domain.ChainID { return s.chain }
+func (s *stubWatcher) Watch(_ context.Context, _ []domain.Address) (<-chan domain.TxEvent, error) {
+	return nil, nil
+}
+
 func TestRegistry_Adapter_Found(t *testing.T) {
 	r := chainreg.NewRegistry([]port.ChainAdapter{
 		&stubAdapter{domain.ChainEthereum},
@@ -60,6 +67,23 @@ func TestRegistry_Watcher_NotFound(t *testing.T) {
 	_, err := r.Watcher(domain.ChainEthereum)
 	if err == nil {
 		t.Error("expected error: no watchers registered")
+	}
+}
+
+func TestRegistry_Watcher_Found(t *testing.T) {
+	r := chainreg.NewRegistry(nil)
+	r.RegisterWatcher(&stubWatcher{domain.ChainEthereum})
+
+	w, err := r.Watcher(domain.ChainEthereum)
+	if err != nil {
+		t.Fatalf("Watcher: %v", err)
+	}
+	if w.Chain() != domain.ChainEthereum {
+		t.Errorf("chain: got %s, want %s", w.Chain(), domain.ChainEthereum)
+	}
+
+	if _, err := r.Watcher(domain.ChainBitcoin); err == nil {
+		t.Error("expected error for unregistered chain")
 	}
 }
 
