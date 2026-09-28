@@ -95,3 +95,11 @@ For every task, end to end:
 4. Commit with a short, factual message. No Claude attribution — same strict policy as elsewhere in this file, applies to commits and PR bodies alike.
 5. Push the branch and open a PR with `gh pr create`: a short body covering what changed, why, and how it was tested. Don't merge it — leave that to review.
 6. Report the PR URL. Nothing is "done" until there's a PR link.
+
+### Handling PR feedback
+
+Reading is already available via `gh` — no separate integration needed. When told to address comments on a PR:
+
+- **PR still open:** `gh pr view <N> --json comments,reviews` (or `gh pr diff <N> --patch` / the GitHub UI link) to read the feedback, checkout its branch, push new commits addressing each point, reply to the review thread with `gh pr comment <N>` summarizing what changed.
+- **PR already merged:** you can't push onto a closed PR. Open a new branch off current `master` that addresses the feedback, referencing the original PR number in the commit message and the new PR's description.
+- Always confirm which PR and which specific comments before making changes if either is ambiguous — don't guess at scope from a partial description.
