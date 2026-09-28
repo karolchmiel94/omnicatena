@@ -2,10 +2,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/bitcoin"
 	"github.com/karolchmiel94/omnicatena/internal/adapter/chain/evm"
@@ -22,6 +24,15 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	dbPool, err := pgxpool.New(context.Background(), cfg.Database.URL)
+	if err != nil {
+		log.Fatalf("db: %v", err)
+	}
+	defer dbPool.Close()
+	if err := dbPool.Ping(context.Background()); err != nil {
+		log.Fatalf("db: ping: %v", err)
+	}
 
 	ethAdapter, err := evm.New(evm.Config{
 		RPCURL:  cfg.Ethereum.RPCURL,
@@ -55,8 +66,8 @@ func main() {
 	tronAdapter := tron.New(tron.Config{RPCURL: cfg.Tron.RPCURL})
 
 	registry := chain.NewRegistry([]port.ChainAdapter{ethAdapter, baseAdapter, btcAdapter, solAdapter, tronAdapter})
-	keys := keystore.New()
-	repo := repository.NewInMemoryWallet()
+	keys := keystore.NewPostgres(dbPool)
+	repo := repository.NewPostgresWallet(dbPool)
 
 	walletSvc := app.NewWalletService(registry, keys, repo)
 	txSvc := app.NewTransactionService(registry, keys, repo)

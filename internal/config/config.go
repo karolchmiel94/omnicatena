@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type EVM struct {
 	RPCURL  string
@@ -21,12 +24,26 @@ type Tron struct {
 	RPCURL string
 }
 
+// Kafka publishing is optional (ADR-0005) — disabled by default so running the
+// API doesn't require a broker. Enable with KAFKA_ENABLED=true.
+type Kafka struct {
+	Enabled bool
+	Brokers []string
+	Topic   string
+}
+
+type Database struct {
+	URL string
+}
+
 type Config struct {
 	Ethereum EVM
 	Base     EVM
 	Bitcoin  Bitcoin
 	Solana   Solana
 	Tron     Tron
+	Kafka    Kafka
+	Database Database
 }
 
 func Load() Config {
@@ -49,6 +66,14 @@ func Load() Config {
 		},
 		Tron: Tron{
 			RPCURL: getenv("TRON_RPC_URL", "http://localhost:9090"),
+		},
+		Kafka: Kafka{
+			Enabled: getenv("KAFKA_ENABLED", "false") == "true",
+			Brokers: strings.Split(getenv("KAFKA_BROKERS", "localhost:9092"), ","),
+			Topic:   getenv("KAFKA_TOPIC", "omnicatena.tx.events"),
+		},
+		Database: Database{
+			URL: getenv("DATABASE_URL", "postgres://omni:omni@localhost:5433/omnicatena?sslmode=disable"),
 		},
 	}
 }
